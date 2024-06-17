@@ -51,8 +51,16 @@ app.get('/', (req, res) => {
 });
 
 app.post('/user', 
-  body('email').isEmail(),
-  body('password').isLength({ min: 5 }),
+  body('email')
+    .isEmail().withMessage('Debe ser un correo electrónico válido.')
+    .normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false })
+    .isLength({ min: 6, max: 100 }).withMessage('El correo electrónico debe tener entre 6 y 100 caracteres.'),
+    body('password')
+    .isLength({ min: 8 }).withMessage('La contraseña debe tener al menos 8 caracteres.')
+    .matches(/\d/).withMessage('La contraseña debe contener al menos un número.')
+    .matches(/[a-z]/).withMessage('La contraseña debe contener al menos una letra minúscula.')
+    .matches(/[A-Z]/).withMessage('La contraseña debe contener al menos una letra mayúscula.')
+    .matches(/[!@#$%^&*(),.?":{}|<>]/).withMessage('La contraseña debe contener al menos un carácter especial.'),
   (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

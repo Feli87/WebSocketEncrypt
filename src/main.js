@@ -15,7 +15,14 @@ const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 
 //Secure server
-app.use(helmet());
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'", "'trusted-scripts.com'"],
+    objectSrc: ["'none'"],
+    upgradeInsecureRequests: [],
+  },
+}));
 
 app.use(cors({
   origin: process.env.CORS_ORIGIN_URL,
@@ -30,12 +37,25 @@ app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: true } // set secure to true if using https
+  cookie: { secure: true, httpOnly: true, sameSite: 'strict' }
 }));
 
-app.use(csurf({ cookie: true }));
+app.use(csurf({ 
+  cookie: true,
+  cookieName: 'XSRF-TOKEN',
+  cookieHttpOnly: true,
+  setHeader: true,
+  sameSite: 'strict'
+}));
 
-app.use(hpp());
+app.use(hpp({
+  cookie: true,
+  parameterLimit: 100,
+  maxParameterLimit: 1000
+}));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const options = {
   key: fs.readFileSync(path.resolve(__dirname, '../privkey.pem')),
@@ -82,14 +102,51 @@ io.on('connection', (socket) => {
   });
 });
 
-
-//jwt example
-const token = jwt.sign({ userId: 123 }, 'your-256-bit-secret', { expiresIn: '1h' });
-
-jwt.verify(token, 'your-256-bit-secret', function(err, decoded) {
-  // decoded contains the decoded payload
+//errors handles
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
 });
 
 server.listen(port, () => {
   console.log(`listening on ${port}`);
 });
+
+//example front
+// Asume que estás usando fetch para hacer la petición
+// const email = "test@example.com";
+// const password = "YourSecurePassword1!";
+
+// // Obtén el token CSRF desde una cookie
+// const csrfToken = document.cookie
+//   .split('; ')
+//   .find(row => row.startsWith('XSRF-TOKEN'))
+//   .split('=')[1];
+
+// fetch('https://tu-servidor.com/user', {
+//   method: 'POST',
+//   headers: {
+//     'Content-Type': 'application/json',
+//     'CSRF-Token': csrfToken // Incluye el token CSRF en el encabezado
+//   },
+//   body: JSON.stringify({ email, password })
+// })
+// .then(response => response.json())
+// .then(data => {
+//   if (data.errors) {
+//     // Maneja errores de validación
+//     console.error(data.errors);
+//   } else {
+//     console.log('Success:', data);
+//   }
+// })
+// .catch((error) => {
+//   console.error('Error:', error);
+// });
+
+//jwt example
+// const token = jwt.sign({ userId: 123 }, 'your-256-bit-secret', { expiresIn: '1h' });
+
+// jwt.verify(token, 'your-256-bit-secret', function(err, decoded) {
+//   // decoded contains the decoded payload
+// });

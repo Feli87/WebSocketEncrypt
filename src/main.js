@@ -12,7 +12,6 @@ const hpp = require('hpp');
 const port = process.env.PORT || 3000;
 const app = express();
 const { body, validationResult } = require('express-validator');
-const jwt = require('jsonwebtoken');
 
 //Secure server
 app.use(helmet.contentSecurityPolicy({
@@ -37,7 +36,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: true, httpOnly: true, sameSite: 'strict' }
+  cookie: { secure: true, httpOnly: true, sameSite: 'none' }
 }));
 
 app.use(csurf({ 
@@ -45,7 +44,7 @@ app.use(csurf({
   cookieName: 'XSRF-TOKEN',
   cookieHttpOnly: true,
   setHeader: true,
-  sameSite: 'strict'
+  sameSite: 'none'
 }));
 
 app.use(hpp({
@@ -142,11 +141,4 @@ server.listen(port, () => {
 // })
 // .catch((error) => {
 //   console.error('Error:', error);
-// });
-
-//jwt example
-// const token = jwt.sign({ userId: 123 }, 'your-256-bit-secret', { expiresIn: '1h' });
-
-// jwt.verify(token, 'your-256-bit-secret', function(err, decoded) {
-//   // decoded contains the decoded payload
 // });

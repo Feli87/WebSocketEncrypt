@@ -12,7 +12,6 @@ const hpp = require('hpp');
 const port = process.env.PORT || 3000;
 const app = express();
 const { body, validationResult } = require('express-validator');
-const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 //Secure server
@@ -73,16 +72,6 @@ io.on('connection', (socket) => {
   });
 });
 
-//bcrypt example
-const saltRounds = 10;
-
-bcrypt.hash('myPlaintextPassword', saltRounds, function(err, hash) {
-  // Store hash in your password DB.
-});
-
-bcrypt.compare('myPlaintextPassword', hash, function(err, result) {
-  // result == true
-});
 
 //jwt example
 const token = jwt.sign({ userId: 123 }, 'your-256-bit-secret', { expiresIn: '1h' });
